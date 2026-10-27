@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package": "flashasia/laravel-mediable",
-  "candidate_release": "6.2.2",
+  "candidate_release": "6.2.3",
   "release_status": "source candidate; actual release publication established externally by VCS tags and consumer immutable locks",
   "upstream": {
     "repository": "https://github.com/plank/laravel-mediable",
@@ -154,8 +154,8 @@
     "LICENSE.md": "e135a634f6d6d00b81d39f3c9957aa2f332772cd6f5e5f2542cfc500cae37ab7",
     "composer.json": "41870ba6e7c79091f4a86714702e31dbc33967eeffc44b2b454265e08e99e23a",
     "config/mediable.php": "45dcff259b39dfeb82251abb043eb4fcb09b8c7d61809ea8375623d9e3c9757d",
-    "migrations/2016_06_27_000000_create_mediable_tables.php": "395b12016e3c001011efcf6ab22b7d5e99b1f3a6adb0974d586050e60c5fec79",
-    "migrations/2020_10_12_000000_add_variants_to_media.php": "57bcad8fee2f2e2bd524dc131700ef44e7c9bbe9df5bbd08f917afc3b938909e",
+    "migrations/2016_06_27_000000_create_mediable_tables.php": "82f43b6081b970d1231f44f1bc38988e5623137d200d1bf73b82099895f16ee0",
+    "migrations/2020_10_12_000000_add_variants_to_media.php": "b443f00292872d684b1fedd879c06ec524584c4f1e7a750a5ed027d480177112",
     "migrations/2024_03_30_000000_add_alt_to_media.php": "28b3a44d08977cea2ff356de8a040d6c883394c9347bf2010fbfe477bed89e9b",
     "src/Commands/ImportMediaCommand.php": "3a8b45511e36279a97d2312321420963d1d1dbe7e61a66d4f44b8dbbcb1e0886",
     "src/Commands/PruneMediaCommand.php": "82f7316b62ef365b5113e742f876b027d600a9e13aab18a28be03436411468a0",
@@ -205,10 +205,20 @@
     "src/UrlGenerators/UrlGeneratorFactory.php": "effc1405ca60b9dd69d017fd07781369a556cc46ec4f70d9476ffc5ea50c4d0b",
     "src/UrlGenerators/UrlGeneratorInterface.php": "f2a0d807ad99fd7dc955456975fe8c899f8e1e40bdf8552564c7595dae534fbe",
     "tests/Component/BackportTest.php": "f28fd83c45607d867e36861d6349f1525338c2dd8985415d9a27eb0226d5bf21",
-    "tests/Component/README.md": "4ff6dd856240ac0c1a767d6303964c390966e01a844228db4a4c081343891e03",
+    "tests/Component/README.md": "13e3babfc6cb5144ac75bdaf6efbc7abe12c266bd4e74bdc74e773d082f551dd",
     "tests/Component/bootstrap.php": "c2b182a3f41e3fa6b28fac0b23deda5c54766228eebcc762a0be700385589876",
     "tests/Component/prepare.php": "925a7e9c3f211349f9cf62d23ead7d0ee7207f91fc1cbbc8324b038cd7175795",
-    "tests/Integration/Helpers/FileTest.php": "64c11e8ed8144a0f0fb2ffe05d92999f914e140376526845ae63cdbf9de82f51"
+    "tests/Integration/Helpers/FileTest.php": "64c11e8ed8144a0f0fb2ffe05d92999f914e140376526845ae63cdbf9de82f51",
+    "tests/Component/MySqlMigrationTest.php": "cd2925137c4e5e21a6baf347ecd90e011711fbeeab7a7f2c41e4afbf0b2d20be",
+    "tests/Component/run-bounded.php": "c80dfd5b1d959ceb4e1e5a5c61b00fbcc86aeec7a5c073a45f211a434abeca4b",
+    ".github/workflows/component-backports.yml": "e7c11f157833d0e1cf83f13df8b8a50f6a6841f0afce827b5a7259a340d01aca",
+    "tests/Component/fixtures/provenance.json": "4407fc9b159cdfeee038b5bd00a9c7519708761ec1b643f07ad5d9bec8ca8553",
+    "tests/Component/fixtures/mediable-6.2.2/2024_03_30_000000_add_alt_to_media.php.fixture": "28b3a44d08977cea2ff356de8a040d6c883394c9347bf2010fbfe477bed89e9b",
+    "tests/Component/fixtures/mediable-6.2.2/2016_06_27_000000_create_mediable_tables.php.fixture": "395b12016e3c001011efcf6ab22b7d5e99b1f3a6adb0974d586050e60c5fec79",
+    "tests/Component/fixtures/mediable-6.2.2/2020_10_12_000000_add_variants_to_media.php.fixture": "57bcad8fee2f2e2bd524dc131700ef44e7c9bbe9df5bbd08f917afc3b938909e",
+    "tests/Component/fixtures/mediable-5.9.1/LICENSE.md": "e135a634f6d6d00b81d39f3c9957aa2f332772cd6f5e5f2542cfc500cae37ab7",
+    "tests/Component/fixtures/mediable-5.9.1/2016_06_27_000000_create_mediable_tables.php.fixture": "0bc898421b360191abee7d60f2df968b9174fcd69e06cd887213a53460c6ee3f",
+    "tests/Component/fixtures/mediable-5.9.1/2020_10_12_000000_add_variants_to_media.php.fixture": "febefb3ac07034220f30f44d710c6009daaf0b5ae6a45904f0401a88174b2fac"
   },
   "dependency_license": {
     "enshrined/svg-sanitize": "GPL-2.0-or-later (separate Composer dependency; not copied into fork)"
@@ -217,6 +227,35 @@
     {
       "file": "src/MediaUploader.php",
       "reason": "ARB01: rewind current stream before every applicable sanitizer; inspect-only sanitizer may consume bytes and return null, which otherwise bypasses subsequent SVG sanitization."
+    },
+    {
+      "files": [
+        "migrations/2016_06_27_000000_create_mediable_tables.php",
+        "migrations/2020_10_12_000000_add_variants_to_media.php"
+      ],
+      "reason": "MEDIABLE-MYSQL-01: restore unsigned INT types for four historical 5.9.1 identifiers; retain migration filenames, guards, connection behavior and constraints; no existing-schema conversion.",
+      "historical_commit": "c9d72a7f9daf20e97277d1500f4d9450f33d817e"
     }
-  ]
+  ],
+  "mysql_migration_matrix": {
+    "mysql": "8.4.11",
+    "illuminate": [
+      "10.49.0",
+      "11.51.0"
+    ],
+    "php": [
+      "8.3.28",
+      "8.4.17"
+    ],
+    "tests_per_cell": 3,
+    "assertions_per_cell": 55,
+    "prefix": "kmj_",
+    "fixtures": "tests/Component/fixtures/provenance.json",
+    "scopes": [
+      "fresh package plus independently written minimal INT foreign-key consumer; actual application migration requires separate validation in application repository",
+      "genuine 5.9.1 migrations and ledger upgrade preserves rows, only alt added, repeat no-op",
+      "cascade and null-on-delete; fresh rollback and upgrade-batch rollback",
+      "already migrated 6.2.2 BIGINT schema remains unchanged"
+    ]
+  }
 }

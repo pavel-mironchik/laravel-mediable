@@ -27,10 +27,10 @@ return new class extends Migration {
             'media',
             'original_media_id',
             function (Blueprint $table) {
-                $table->foreignIdFor(Media::class, 'original_media_id')
+                $table->unsignedInteger('original_media_id')
                     ->nullable()
-                    ->after('variant_name')
-                    ->constrained('media')
+                    ->after('variant_name');
+                $table->foreign('original_media_id')->references('id')->on('media')
                     ->nullOnDelete();
             }
         );

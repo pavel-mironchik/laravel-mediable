@@ -32,3 +32,38 @@ executable extension rejection, mixed-case double extensions, dotfiles and
 zero-directory persistence/rename. No remote network requests are made. This
 suite does not claim SSRF protection: consumers must deny remote sources.
 PHP 8.4 retains eight unsuppressed Image 2.7.2 implicit-nullable deprecations.
+
+## Historical MySQL identifier compatibility
+
+`MySqlMigrationTest.php` uses a real MySQL service and a new randomly named
+`mediable_regression_*` database for each test, with the production-like `kmj_`
+table prefix. It never accepts a pre-existing database name. The test account
+needs CREATE/DROP DATABASE permission; teardown drops only its generated database.
+Fixtures are byte-identical migrations with `.fixture` suffixes (excluded from
+PHP class discovery); each test copies them into a temporary directory and runs
+them through the genuine Illuminate Migrator in a separate PHP process.
+`fixtures/provenance.json` records source commits, archive and file SHA-256 values.
+The genuine 5.9.1 MIT license accompanies its migrations. The INT foreign-key consumer is an independently written minimal test schema.
+No application migration source is included. Actual application migration proof
+belongs to the application repository and is not claimed by this package suite.
+
+```
+COMPONENT_AUTOLOAD=/tmp/mediable-component-test/vendor/autoload.php \
+MYSQL_HOST=127.0.0.1 MYSQL_PORT=3306 MYSQL_USER=root MYSQL_PASSWORD= \
+  php tests/Component/run-bounded.php MySqlMigrationTest.php /tmp/mysql-junit.xml
+```
+
+`run-bounded.php` discovers the exact file, requires 1–59 tests, enforces a
+900-second hard limit per PHPUnit invocation, fails on risky/skipped/incomplete
+results, and requires JUnit testcase count to match discovery. The same runner
+wraps the existing 16-test component suite. MySQL CI uses the same truthful
+Composer consumer and security policy in all four PHP/Illuminate combinations.
+There are three MySQL tests, separate from the 16 component tests.
+
+The 5.9.1 upgrade test runs the genuine historical files and populates rows before
+candidate migration. It verifies exactly one DDL statement (adding `alt`),
+unchanged old ledger/rows, a repeated no-op, and rollback of that new batch only.
+Fresh rollback exercises the candidate's own constraints. Rolling an upgraded
+5.x database back through older historical batches is outside this patch's scope.
+An existing fully migrated 6.2.2 BIGINT schema is deliberately left unchanged;
+this patch does not provide an in-place BIGINT-to-INT conversion.

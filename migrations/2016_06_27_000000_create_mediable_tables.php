@@ -3,7 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Plank\Mediable\Media;
 
 return new class extends Migration {
     /**
@@ -17,7 +16,8 @@ return new class extends Migration {
             Schema::create(
                 'media',
                 function (Blueprint $table) {
-                    $table->id();
+                    // Preserve the unsigned INT identifiers used by historical 5.x schemas.
+                    $table->increments('id');
                     $table->string('disk', 32);
                     $table->string('directory');
                     $table->string('filename');
@@ -35,8 +35,11 @@ return new class extends Migration {
             Schema::create(
                 'mediables',
                 function (Blueprint $table) {
-                    $table->foreignIdFor(Media::class)->constrained('media')->cascadeOnDelete();
-                    $table->morphs('mediable');
+                    $table->unsignedInteger('media_id');
+                    $table->foreign('media_id')->references('id')->on('media')->cascadeOnDelete();
+                    $table->string('mediable_type');
+                    $table->unsignedInteger('mediable_id');
+                    $table->index(['mediable_type', 'mediable_id']);
                     $table->string('tag')->index();
                     $table->unsignedInteger('order')->index();
                     $table->primary(['media_id', 'mediable_type', 'mediable_id', 'tag']);

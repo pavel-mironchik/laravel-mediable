@@ -1,0 +1,20 @@
+{
+  "mediable-5.9.1": {
+    "repository": "https://github.com/plank/laravel-mediable",
+    "commit": "c9d72a7f9daf20e97277d1500f4d9450f33d817e",
+    "archive_sha256": "6c1751bf179d58f588c6d6d3e656c79f29103bc212a75cb41c3a4012714c5ea2",
+    "license": "MIT; LICENSE.md retained"
+  },
+  "mediable-6.2.2": {
+    "repository": "https://github.com/pavel-mironchik/laravel-mediable",
+    "commit": "65e1e0bff24746e4aafc423a5828d4fb5598ef6a"
+  },
+  "sha256": {
+    "mediable-6.2.2/2024_03_30_000000_add_alt_to_media.php.fixture": "28b3a44d08977cea2ff356de8a040d6c883394c9347bf2010fbfe477bed89e9b",
+    "mediable-6.2.2/2016_06_27_000000_create_mediable_tables.php.fixture": "395b12016e3c001011efcf6ab22b7d5e99b1f3a6adb0974d586050e60c5fec79",
+    "mediable-6.2.2/2020_10_12_000000_add_variants_to_media.php.fixture": "57bcad8fee2f2e2bd524dc131700ef44e7c9bbe9df5bbd08f917afc3b938909e",
+    "mediable-5.9.1/LICENSE.md": "e135a634f6d6d00b81d39f3c9957aa2f332772cd6f5e5f2542cfc500cae37ab7",
+    "mediable-5.9.1/2016_06_27_000000_create_mediable_tables.php.fixture": "0bc898421b360191abee7d60f2df968b9174fcd69e06cd887213a53460c6ee3f",
+    "mediable-5.9.1/2020_10_12_000000_add_variants_to_media.php.fixture": "febefb3ac07034220f30f44d710c6009daaf0b5ae6a45904f0401a88174b2fac"
+  }
+}

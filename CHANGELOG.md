@@ -1,5 +1,23 @@
 # FlashAsia fork release notes
 
+## 6.2.3 candidate release scope
+
+Restore the historical unsigned INT identifier contract from genuine Plank 5.9.1
+for `media.id`, `mediables.media_id`, `mediables.mediable_id`, and
+`media.original_media_id`. This fixes fresh MySQL installation with existing
+INT foreign-key consumers, including FlashAsia's thumbnail-state migration.
+Patch scope: repair existing schema compatibility; no new runtime capability,
+API, dependency constraint, migration filename, or ledger entry is introduced.
+Existing migrated schemas are not converted (including existing BIGINT schemas).
+The existing migration guards, connection selection and security backports remain.
+
+A dedicated MySQL 8.4.11 component matrix covers fresh installation with an
+independently written minimal INT foreign-key consumer, real 5.9.1 migration/ledger
+upgrade with existing original, variant, pivot and thumbnail rows, repeated no-op
+migration, INT types, cascade/null-on-delete, rollback, and existing 6.2.2 BIGINT
+no-op behavior. Fixtures retain source provenance and checksums. This is bounded
+component proof, not a full application or upstream-suite claim.
+
 ## 6.2.2 release scope
 
 Actual release publication is established by the VCS tag and consumer immutable
