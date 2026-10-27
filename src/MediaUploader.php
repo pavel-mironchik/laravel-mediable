@@ -13,10 +13,12 @@ use Plank\Mediable\Exceptions\MediaUpload\FileNotSupportedException;
 use Plank\Mediable\Exceptions\MediaUpload\FileSizeException;
 use Plank\Mediable\Exceptions\MediaUpload\ForbiddenException;
 use Plank\Mediable\Exceptions\MediaUpload\InvalidHashException;
+use Plank\Mediable\FileSanitizers\SanitizerInterface;
 use Plank\Mediable\Helpers\File;
 use Plank\Mediable\SourceAdapters\RawContentAdapter;
 use Plank\Mediable\SourceAdapters\SourceAdapterFactory;
 use Plank\Mediable\SourceAdapters\SourceAdapterInterface;
+use Plank\Mediable\SourceAdapters\StreamAdapter;
 
 /**
  * Media Uploader.
@@ -173,7 +175,11 @@ class MediaUploader
      */
     public function useFilename(string $filename): self
     {
-        $this->filename = File::sanitizeFilename($filename);
+        $this->filename = File::sanitizeFilename(
+            $filename,
+            null,
+            $this->config['forbidden_extensions']
+        );
         $this->hashFilenameAlgo = null;
 
         return $this;
@@ -371,6 +377,13 @@ class MediaUploader
         return $this;
     }
 
+    public function setForbiddenMimeTypes(array $forbiddenMimes): self
+    {
+        $this->config['forbidden_mime_types'] = array_map('strtolower', $forbiddenMimes);
+
+        return $this;
+    }
+
     /**
      * Prefer the MIME type provided by the client, if any, over the inferred MIME type.
      * Depending on the source, this may not be accurate.
@@ -403,6 +416,13 @@ class MediaUploader
     public function setAllowedExtensions(array $allowedExtensions): self
     {
         $this->config['allowed_extensions'] = array_map('strtolower', $allowedExtensions);
+
+        return $this;
+    }
+
+    public function setForbiddenExtensions(array $forbiddenExtensions): self
+    {
+        $this->config['forbidden_extensions'] = array_map('strtolower', $forbiddenExtensions);
 
         return $this;
     }
@@ -594,6 +614,7 @@ class MediaUploader
 
         $model = $this->populateModel($this->makeModel());
 
+        $this->sanitizeFile($model);
         $this->manipulateImage($model);
 
         if (is_callable($this->before_save)) {
@@ -642,6 +663,7 @@ class MediaUploader
         $path = $media->getDiskPath();
 
         $model = $this->populateModel($media);
+        $this->sanitizeFile($model);
 
         if (is_callable($this->before_save)) {
             call_user_func($this->before_save, $model, $this->source);
@@ -904,8 +926,13 @@ class MediaUploader
     {
         $mimeType = strtolower($mimeType);
         $allowed = $this->config['allowed_mime_types'] ?? [];
-        if (!empty($allowed) && !in_array($mimeType, $allowed)) {
-            throw FileNotSupportedException::mimeRestricted($mimeType, $allowed);
+        $forbidden = $this->config['forbidden_mime_types'] ?? [];
+        $actuallyAllowed = array_diff($allowed, $forbidden);
+        if (!empty($allowed) && !in_array($mimeType, $actuallyAllowed)) {
+            throw FileNotSupportedException::mimeRestricted($mimeType, $actuallyAllowed);
+        }
+        if (empty($allowed) && in_array($mimeType, $forbidden)) {
+            throw FileNotSupportedException::mimeRestricted($mimeType, $actuallyAllowed);
         }
 
         return $mimeType;
@@ -922,8 +949,13 @@ class MediaUploader
     {
         $extensionLower = strtolower($extension);
         $allowed = $this->config['allowed_extensions'] ?? [];
-        if (!empty($allowed) && !in_array($extensionLower, $allowed)) {
-            throw FileNotSupportedException::extensionRestricted($extensionLower, $allowed);
+        $forbidden = $this->config['forbidden_extensions'] ?? [];
+        $actuallyAllowed = array_diff($allowed, $forbidden);
+        if (!empty($allowed) && !in_array($extensionLower, $actuallyAllowed)) {
+            throw FileNotSupportedException::extensionRestricted($extensionLower, $actuallyAllowed);
+        }
+        if (empty($allowed) && in_array($extensionLower, $forbidden)) {
+            throw FileNotSupportedException::extensionRestricted($extensionLower, $actuallyAllowed);
         }
 
         return $toLower ? $extensionLower : $extension;
@@ -1090,10 +1122,20 @@ class MediaUploader
         $filename = $this->source->filename();
 
         if ($filename === null) {
-            ConfigurationException::cannotInferFilename();
+            throw ConfigurationException::cannotInferFilename();
         }
 
-        return File::sanitizeFileName($filename);
+        $filename = File::sanitizeFileName(
+            $filename,
+            null,
+            $this->config['forbidden_extensions']
+        );
+
+        if ($filename === '') {
+            throw ConfigurationException::cannotInferFilename();
+        }
+
+        return $filename;
     }
 
     private function writeToDisk(Media $model): void
@@ -1113,6 +1155,31 @@ class MediaUploader
             $options['visibility'] = $this->getVisibility();
         }
         return $options;
+    }
+
+    public function sanitizeFile(Media $model): void
+    {
+        if (empty($this->config['file_sanitizers'])) {
+            return;
+        }
+        foreach ($this->config['file_sanitizers'] as $sanitizerClass) {
+            if (!is_a($sanitizerClass, SanitizerInterface::class, true)) {
+                throw ConfigurationException::invalidSanitizer($sanitizerClass);
+            }
+            $sanitizer = app($sanitizerClass);
+            if ($sanitizer->isApplicable(
+                $model->mime_type,
+                $model->extension,
+                $model->aggregate_type
+            )) {
+                $result = $sanitizer->sanitize($this->source->getStream());
+                if ($result !== null) {
+                    $this->source = new StreamAdapter($result);
+                }
+            }
+        }
+        // Update the model's size in case the sanitizer modified the file contents
+        $model->size = $this->source->size() ?? $model->size;
     }
 
     /**

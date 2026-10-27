@@ -16,7 +16,7 @@
         "src/Helpers/File.php",
         "tests/Integration/Helpers/FileTest.php"
       ],
-      "application": "Exact source and regression-test diff; unrelated upstream 7.x changelog context omitted.",
+      "application": "Exact upstream sanitizer algorithm plus reviewed compatibility deviation: filter only empty strings, retaining literal 0; joinPathComponents also uses strict empty-string checks to preserve actual zero-directory disk paths.",
       "advisory": "CVE-2026-49970",
       "url": "https://github.com/plank/laravel-mediable/commit/6d1e7fb39922fdfb3b2d120e13f4eb2e653ae082"
     },
@@ -27,12 +27,92 @@
       ],
       "application": "Exact upstream diff.",
       "url": "https://github.com/plank/laravel-mediable/commit/d8ace8d844f0e821707d0dddeeeff4fb35586349"
+    },
+    {
+      "commit": "65046b2162fac23ec5d5e8fbdff01a9a0804003e",
+      "url": "https://github.com/plank/laravel-mediable/commit/65046b2162fac23ec5d5e8fbdff01a9a0804003e",
+      "files": [
+        "src/FileSanitizers/SanitizerInterface.php",
+        "src/FileSanitizers/SvgSanitizer.php",
+        "src/Exceptions/MediaUpload/ConfigurationException.php",
+        "src/Exceptions/MediaUploadException.php",
+        "src/MediaUploader.php",
+        "config/mediable.php"
+      ],
+      "application": "Exact source/config hunks applied on v6; upstream fixtures and sanitizer tests retained."
+    },
+    {
+      "commit": "1e66c68de26e16662cc5510bf11dc1acc1f4d1ce",
+      "url": "https://github.com/plank/laravel-mediable/commit/1e66c68de26e16662cc5510bf11dc1acc1f4d1ce",
+      "files": [
+        "src/FileSanitizers/SvgSanitizer.php"
+      ],
+      "application": "Exact MIME-or-extension applicability hunk."
+    },
+    {
+      "commit": "c6176f2b8b76249e6282fa6e536742693656873e",
+      "url": "https://github.com/plank/laravel-mediable/commit/c6176f2b8b76249e6282fa6e536742693656873e",
+      "files": [
+        "composer.json"
+      ],
+      "application": "Adapted dependency constraint to ^1.0 only, excluding vulnerable <=0.22 versions; original PHP/Illuminate/Image constraints unchanged."
+    },
+    {
+      "commit": "25e3bb2bbcf83370126c5dfb578ea4bbe1e9a76a",
+      "url": "https://github.com/plank/laravel-mediable/commit/25e3bb2bbcf83370126c5dfb578ea4bbe1e9a76a",
+      "files": [
+        "src/MediaUploader.php",
+        "config/mediable.php"
+      ],
+      "application": "Exact v6-array-compatible forbidden extension/MIME config and validation hunks."
+    },
+    {
+      "commit": "49e3583bed13423611b3391f89e6b002571eed73",
+      "url": "https://github.com/plank/laravel-mediable/commit/49e3583bed13423611b3391f89e6b002571eed73",
+      "files": [
+        "src/Helpers/File.php",
+        "src/MediaUploader.php"
+      ],
+      "application": "Exact double-extension sanitization source hunks."
+    },
+    {
+      "commit": "8ddb0e5b300084e91ad2cb18a6e7bc768bb7b008",
+      "url": "https://github.com/plank/laravel-mediable/commit/8ddb0e5b300084e91ad2cb18a6e7bc768bb7b008",
+      "files": [
+        "config/mediable.php"
+      ],
+      "application": "Exact pht forbidden extension hunk."
+    },
+    {
+      "commit": "8b7dc46d3c2f0425834f96ae63117928f4865494",
+      "url": "https://github.com/plank/laravel-mediable/commit/8b7dc46d3c2f0425834f96ae63117928f4865494",
+      "files": [
+        "src/Helpers/File.php"
+      ],
+      "application": "Exact corrected forbidden_extensions config lookup."
+    },
+    {
+      "commit": "06066eea95862d9c00e4951141a6af18fef314de",
+      "url": "https://github.com/plank/laravel-mediable/commit/06066eea95862d9c00e4951141a6af18fef314de",
+      "files": [
+        "src/Helpers/File.php",
+        "src/MediaUploader.php",
+        "config/mediable.php"
+      ],
+      "application": "Dotfile and forbidden defaults exact semantics; generateFilename adapted from v7 configuration object access to existing v6 config array, including missing throw and empty inferred filename denial."
     }
   ],
   "security_scope": {
     "all_upstream_7_fixes": false,
     "remote_ssrf_fix_backported": false,
-    "consumer_requirement": "Independently map upstream advisory set to reviewed backports or enforced application restrictions. Rename and clean fork-name audit are not security proof."
+    "consumer_requirement": "REQUIRED: disable all remote URL sources in source-adapter mappings and enforce denial at consumer uploader entry points. Direct RemoteUrlAdapter remains unsafe. Independently track upstream advisories; renamed-package audit is not proof.",
+    "svg_xss_fix_backported": true,
+    "executable_extension_fixes_backported": true,
+    "ssrf_reference_commits": [
+      "7e9e3000fa05fe16e678f15bfb51a091e60c2cb8",
+      "e4d79c003a0400f4196de8392f0675459be9d640"
+    ],
+    "ssrf_decision": "Not adopted: upstream HEAD preflight followed by separate auto-redirecting fopen GET does not bind validation to download. Consumer denies remote sources; no package SSRF safety claim."
   },
   "regressions": [
     "upstream sanitizer vectors and Unicode",
@@ -40,7 +120,11 @@
     "non-console real provider migration path registration and SQLite Migrator",
     "pre-alt schema row preservation and repeated migrator run",
     "real Image 2.7.2 GD variant without optimizer",
-    "removing either source backport fails targeted tests"
+    "removing either source backport fails targeted tests",
+    "zero and nested zero sanitizer segments, real upload/copy/move bytes and existing zero rename with root-neighbor false collision",
+    "SVG upload/replacement active content removal with row size synchronized",
+    "SVG extension despite text MIME, custom DTD denial, malformed replacement preserves original bytes and row",
+    "forbidden php/pht/ini/cer/asa, mixed-case double extension, leading dot, benign Unicode and empty inferred filename"
   ],
   "component_matrix": {
     "illuminate": [
@@ -52,28 +136,79 @@
       "8.4.17"
     ],
     "image": "2.7.2",
-    "tests_per_cell": 5,
-    "assertions_per_cell": 52,
+    "tests_per_cell": 13,
+    "assertions_per_cell": 102,
     "php84_deprecations_per_cell": 8,
     "deprecation_origin": "Intervention Image 2.7.2 implicit nullable parameters",
     "limitations": [
       "No published Illuminate 10.50.3 component tags; full framework consumer proof is separate",
       "Not full framework/HTTP/Orchestra/S3/optimizer proof",
       "PHP 8.1/8.2 and Image 3 declared upstream constraints retained but not tested in bounded matrix"
-    ]
+    ],
+    "svg_sanitize": "1.1.1"
   },
   "release_commit_policy": "No self-referential commit SHA embedded. Consumer pins actual release tag and immutable SHA in lock and review policy.",
   "file_sha256": {
     "LICENSE.md": "e135a634f6d6d00b81d39f3c9957aa2f332772cd6f5e5f2542cfc500cae37ab7",
-    "composer.json": "27a0841d6b93a4bbf69ee5a30ea52e29e231381ef18f8bfb453dc662b421883e",
-    "src/Helpers/File.php": "0596c8d4a8b51827e107a48e64f7a6e5c3755484187ecee9ea08800dad766355",
-    "src/MediableServiceProvider.php": "6eeb06d67f882e0ab6ffaf68e7d410ede5fc7e8b5ad2f981da2e27259ec1bded",
-    "tests/Integration/Helpers/FileTest.php": "999a7e961c09b090ecd1127336de4d3ec98eac0750d3ae2d282c66dafb40b81e",
-    "tests/Component/BackportTest.php": "52b532e2b1de275b4786e4bf2511923449f242dee238239394c9aa5c8c376706",
-    "tests/Component/bootstrap.php": "c2b182a3f41e3fa6b28fac0b23deda5c54766228eebcc762a0be700385589876",
-    "tests/Component/prepare.php": "925a7e9c3f211349f9cf62d23ead7d0ee7207f91fc1cbbc8324b038cd7175795",
+    "composer.json": "41870ba6e7c79091f4a86714702e31dbc33967eeffc44b2b454265e08e99e23a",
+    "config/mediable.php": "45dcff259b39dfeb82251abb043eb4fcb09b8c7d61809ea8375623d9e3c9757d",
+    "migrations/2016_06_27_000000_create_mediable_tables.php": "395b12016e3c001011efcf6ab22b7d5e99b1f3a6adb0974d586050e60c5fec79",
     "migrations/2020_10_12_000000_add_variants_to_media.php": "57bcad8fee2f2e2bd524dc131700ef44e7c9bbe9df5bbd08f917afc3b938909e",
     "migrations/2024_03_30_000000_add_alt_to_media.php": "28b3a44d08977cea2ff356de8a040d6c883394c9347bf2010fbfe477bed89e9b",
-    "migrations/2016_06_27_000000_create_mediable_tables.php": "395b12016e3c001011efcf6ab22b7d5e99b1f3a6adb0974d586050e60c5fec79"
+    "src/Commands/ImportMediaCommand.php": "3a8b45511e36279a97d2312321420963d1d1dbe7e61a66d4f44b8dbbcb1e0886",
+    "src/Commands/PruneMediaCommand.php": "82f7316b62ef365b5113e742f876b027d600a9e13aab18a28be03436411468a0",
+    "src/Commands/SyncMediaCommand.php": "b045870e609b7b14cd64f2f8a99226e00873ac0f9af2ef0dd821bff94ad832e9",
+    "src/Exceptions/ImageManipulationException.php": "e26b232aadb32a4f5f41e4c841a19202b75a99081e421610f396049f9478c3dc",
+    "src/Exceptions/MediaMoveException.php": "9ef2a060a5d67dd873ced3db7170d34d46e4312d87f976eacb494c4e8d58f9fa",
+    "src/Exceptions/MediaUpload/ConfigurationException.php": "1a990c873e5ce40adeeb9af2adac6c27a7de3a5b7fd2b538ad9c44bc0b95a87b",
+    "src/Exceptions/MediaUpload/FileExistsException.php": "6bfb17ff615866c8f7b30ddfa1c098f8a7c8d1c306bb6bda0450d97c09bd831e",
+    "src/Exceptions/MediaUpload/FileNotFoundException.php": "f18437a09a877ffbdc700ce210f88a12808e9832cef0c8dfe8a97f89d868caa8",
+    "src/Exceptions/MediaUpload/FileNotSupportedException.php": "da055cd276a77907f62228555c5d323bf33eeba2c6d70773cab627d744fbd808",
+    "src/Exceptions/MediaUpload/FileSizeException.php": "bd29ce9ca9c373227ac5041df486878ceadd7dd6a0f61547579d10b0dbd40250",
+    "src/Exceptions/MediaUpload/ForbiddenException.php": "e60d9a38aadfea52752342750e6d0a5708434fd2fd6942b6a1d9898eeb2296a3",
+    "src/Exceptions/MediaUpload/InvalidHashException.php": "95c4a72b1245a31e4cb9b4b4ab856ce41ad97cee24081c7e14ed7ce49c41f3fa",
+    "src/Exceptions/MediaUploadException.php": "1427b20984af8b685bc4f59de3975a96d4bf55021bd7e00dabbdd347d0f7a38d",
+    "src/Exceptions/MediaUrlException.php": "1c82298c2681c03167c9b6fc834a2706b59eef338932ab68398cf5bc2e88428e",
+    "src/Facades/ImageManipulator.php": "50c37ce70a067e4dd03921157649cbef4f4730a096bd4a9e35d9db0d541ed81f",
+    "src/Facades/MediaUploader.php": "8f69e59d66813d366a00dd46de76af6ed7fc2e9e05ff7e48660717b5b69594a7",
+    "src/FileSanitizers/SanitizerInterface.php": "37ded3c50b49ea1a93afef122cff9af891ec149331838a9e32bee7ed5c994c31",
+    "src/FileSanitizers/SvgSanitizer.php": "f173430ce34debe94d1fe054ba65c013d2f34b91917a03272a7c071ffb3756f2",
+    "src/HandlesMediaUploadExceptions.php": "bdc39cf5c18335f12f724a5aceddf5536c56a7db9279f506173da0c8d6174744",
+    "src/Helpers/File.php": "ab31261d6cbc07f2a07234a4f91ffa2a8cb3f728c4b8e37fde5e675bce75a492",
+    "src/ImageManipulation.php": "90fd96568e755b1650cc2a2a6f6f9810487bc759179edf2bf3481a07d426f216",
+    "src/ImageManipulator.php": "6e118beb36515db872941df893eb282332300802d3afa1dfc475b4e7eb76632a",
+    "src/ImageOptimizer.php": "0f4bf05bb0dbc1c7202e8c592cd77d97acaccd9d286092cedf1186ef110f93bb",
+    "src/Jobs/CreateImageVariants.php": "17ce1b610f64880d686f0d59fba754e8c9c23633b53e0a7af926054042ba987d",
+    "src/Media.php": "beb48500a9f56764b9c8ea123a6ea4e51c2710d6a6de5380d9e4d1abf7de7882",
+    "src/MediaMover.php": "feeafbe8feb8e242a79c2431e662e1cc8f62740deea1eace1cd7ad608b36332b",
+    "src/MediaUploader.php": "1cc4d58abf41431707b5049c40aebadb57bb7e650dc828f2c5aeaa3b48183977",
+    "src/Mediable.php": "fc998420341985f5efc29df98324abfbcd49b5004717f4adea3c7d79795ae9fe",
+    "src/MediableCollection.php": "428c4fa355a0b8db594f4f27d9c41da69e490c97ad606822bbbb76d851d35cb0",
+    "src/MediableInterface.php": "595433d135d2a446f16d5a0e3b42021dc80e7f0728f713e9a95d8c34d67c266a",
+    "src/MediableServiceProvider.php": "6eeb06d67f882e0ab6ffaf68e7d410ede5fc7e8b5ad2f981da2e27259ec1bded",
+    "src/SourceAdapters/DataUrlAdapter.php": "cbd2fa21ac43e5c2bdbbc5c1ff90c63e6c19b1c078108abe97b18feeabf2cb23",
+    "src/SourceAdapters/FileAdapter.php": "a65e10c8117f451cc63fe1848e646995506825fb95de82a6a97f07b195cb1618",
+    "src/SourceAdapters/LocalPathAdapter.php": "523d12bea7569822750a36d720e043fd6071a033a5890a40aa08090b6db68607",
+    "src/SourceAdapters/RawContentAdapter.php": "b6d555cef9da8e84a1598053045366a045c638989010858394f175964e6a7f10",
+    "src/SourceAdapters/RemoteUrlAdapter.php": "02c85b0d71752c9f8b4762514b855ac579aae361fdea7ee61b8da8d59602d31f",
+    "src/SourceAdapters/SourceAdapterFactory.php": "766f40956ea9b59242dfaa6d9791424edb329e18d9d9e948d050ec91aa3b77df",
+    "src/SourceAdapters/SourceAdapterInterface.php": "aa86d093edacb8d89461fd4d5e62b0df07423a0d37aa6332c328c5808dcc8089",
+    "src/SourceAdapters/StreamAdapter.php": "fe73297489a3b627c397714a96b3bf1c711b2ab690d5ca247c9cb9c91106f0bc",
+    "src/SourceAdapters/StreamResourceAdapter.php": "a4175ccea8046562e86fe73d5efceeffebb69c290ce1afa88eedcd49b9aa3e86",
+    "src/SourceAdapters/UploadedFileAdapter.php": "ba31630aa26cf42471165417e96bedc34248dd9bd9548513ae7b56767278f055",
+    "src/UrlGenerators/BaseUrlGenerator.php": "7efc5e2425161a9ae0a91293f78eabceaca42aec06ce81b6d34462ba43385868",
+    "src/UrlGenerators/LocalUrlGenerator.php": "2c8fa434bf2766093f2a93771d9f635622085a38b21b7ff13e5e81c63c107d91",
+    "src/UrlGenerators/S3UrlGenerator.php": "25d2bbe28b2007de5797b8b1378438173c88c9735540fa4692c81bf930812e06",
+    "src/UrlGenerators/TemporaryUrlGeneratorInterface.php": "de8d55790e8491b51c599be48b5e6f179a45319a471a78aaebd3212d06bacddc",
+    "src/UrlGenerators/UrlGeneratorFactory.php": "effc1405ca60b9dd69d017fd07781369a556cc46ec4f70d9476ffc5ea50c4d0b",
+    "src/UrlGenerators/UrlGeneratorInterface.php": "f2a0d807ad99fd7dc955456975fe8c899f8e1e40bdf8552564c7595dae534fbe",
+    "tests/Component/BackportTest.php": "10286d9f504cc8381b047f3a0a7e7e6a071e9d95772e63433b39068f6cbb3d65",
+    "tests/Component/README.md": "4ff6dd856240ac0c1a767d6303964c390966e01a844228db4a4c081343891e03",
+    "tests/Component/bootstrap.php": "c2b182a3f41e3fa6b28fac0b23deda5c54766228eebcc762a0be700385589876",
+    "tests/Component/prepare.php": "925a7e9c3f211349f9cf62d23ead7d0ee7207f91fc1cbbc8324b038cd7175795",
+    "tests/Integration/Helpers/FileTest.php": "64c11e8ed8144a0f0fb2ffe05d92999f914e140376526845ae63cdbf9de82f51"
+  },
+  "dependency_license": {
+    "enshrined/svg-sanitize": "GPL-2.0-or-later (separate Composer dependency; not copied into fork)"
   }
 }

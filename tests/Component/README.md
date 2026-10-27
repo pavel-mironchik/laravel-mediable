@@ -25,3 +25,10 @@ claim to pass that gate. The original require-dev graph is preserved.
 The local path consumer requires the actual `flashasia-backports` development
 branch. CI checks out the tested commit on that local branch, rather than using a
 Composer version override or pretending the candidate is already tagged.
+
+Security additions exercise real SVG sanitizer upload/replacement, malformed
+replacement preservation, custom-DTD rejection, extension-or-MIME detection,
+executable extension rejection, mixed-case double extensions, dotfiles and
+zero-directory persistence/rename. No remote network requests are made. This
+suite does not claim SSRF protection: consumers must deny remote sources.
+PHP 8.4 retains eight unsuppressed Image 2.7.2 implicit-nullable deprecations.

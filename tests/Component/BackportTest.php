@@ -63,7 +63,7 @@ final class BackportTest extends TestCase {
         (new Filesystem)->deleteDirectory($this->root);
     }
     public function testUpstreamVectorsAndUnicode(): void {
-        foreach (['../bar' => 'bar', '/foo/../../../.env' => 'foo/env', '..\\bar' => 'bar', 'héllo/café' => 'hello/cafe', './bar.jpg' => 'bar-jpg', '/foo/// //bar' => 'foo/bar'] as $input => $expected) {
+        foreach (['../bar' => 'bar', '/foo/../../../.env' => 'foo/env', '..\\bar' => 'bar', 'héllo/café' => 'hello/cafe', '0' => '0', 'a/0/b' => 'a/0/b', './bar.jpg' => 'bar-jpg', '/foo/// //bar' => 'foo/bar'] as $input => $expected) {
             self::assertSame($expected, File::sanitizePath($input));
         }
     }
@@ -118,5 +118,129 @@ final class BackportTest extends TestCase {
         self::assertSame(3, $decoded->height());
         self::assertSame($png, $media->contents());
     }
+
+    public function testZeroDirectoriesPersistForUploadCopyAndMove(): void {
+        $this->migrate();
+        $media = app(MediaUploader::class)->fromString('zero-bytes')->toDestination('local', '0')->useFilename('original')->upload();
+        self::assertSame('0/original.txt', $media->fresh()->getDiskPath());
+        self::assertSame('zero-bytes', app('filesystem')->disk('local')->get('0/original.txt'));
+        $copy = $media->copyTo('archive/0');
+        self::assertSame('archive/0/original.txt', $copy->fresh()->getDiskPath());
+        self::assertSame('zero-bytes', $copy->contents());
+        $media->move('nested/0/destination');
+        self::assertSame('nested/0/destination/original.txt', $media->fresh()->getDiskPath());
+        self::assertSame('zero-bytes', $media->contents());
+        self::assertFalse(app('filesystem')->disk('local')->exists('0/original.txt'));
+    }
+    public function testExistingZeroDirectoryRenameDoesNotCollideWithRootNeighbor(): void {
+        $this->migrate();
+        $disk = app('filesystem')->disk('local');
+        $disk->put('0/existing.txt', 'existing-zero');
+        $disk->put('renamed.txt', 'root-neighbor');
+        $media = new Media;
+        $media->forceFill(['disk'=>'local','directory'=>'0','filename'=>'existing','extension'=>'txt','mime_type'=>'text/plain','aggregate_type'=>'document','size'=>13])->save();
+        $media->rename('renamed');
+        self::assertSame('0/renamed.txt', $media->fresh()->getDiskPath());
+        self::assertSame('existing-zero', $disk->get('0/renamed.txt'));
+        self::assertSame('root-neighbor', $disk->get('renamed.txt'));
+        self::assertFalse($disk->exists('0/existing.txt'));
+    }
+    public function testSvgUploadAndReplacementRemoveActiveContent(): void {
+        $this->migrate();
+        $malicious = file_get_contents(dirname(__DIR__) . '/_data/insecure.svg');
+        $media = app(MediaUploader::class)->fromString($malicious)->toDestination('local', 'vectors')->useFilename('image')->upload();
+        $this->assertSafeSvg($media);
+        $replaced = app(MediaUploader::class)->fromString($malicious)->replace($media);
+        self::assertSame($media->id, $replaced->id);
+        $this->assertSafeSvg($replaced);
+    }
+    public function testSvgExtensionTriggersSanitizerEvenWithTextMime(): void {
+        $this->migrate();
+        $source = new class(file_get_contents(dirname(__DIR__) . '/_data/insecure.svg')) extends \Plank\Mediable\SourceAdapters\RawContentAdapter {
+            public function mimeType(): string { return 'text/plain'; }
+            public function extension(): ?string { return 'svg'; }
+        };
+        $media = app(MediaUploader::class)->fromSource($source)->setAllowUnrecognizedTypes(true)->toDestination('local', 'vectors')->useFilename('disguised')->upload();
+        self::assertSame('svg', $media->extension);
+        $this->assertSafeSvg($media);
+    }
+    public function testCustomDtdSvgFailsBeforePersistence(): void {
+        $this->migrate();
+        $payload = '<!DOCTYPE svg [<!ENTITY custom "unsafe">]><svg xmlns="http://www.w3.org/2000/svg"><text>&custom;</text></svg>';
+        try {
+            app(MediaUploader::class)->fromString($payload)->toDestination('local', 'vectors')->useFilename('entity')->upload();
+            self::fail('Custom DTD entity must be rejected');
+        } catch (\Plank\Mediable\Exceptions\MediaUploadException $e) {
+            self::assertStringContainsString('sanitize', $e->getMessage());
+        }
+        self::assertSame(0, Media::count());
+        self::assertSame([], app('filesystem')->disk('local')->allFiles());
+    }
+    public function testExecutableExtensionsRejectedAndDoubleExtensionsNeutralized(): void {
+        $this->migrate();
+        foreach (['php', 'pht', 'ini', 'cer', 'asa'] as $extension) {
+            $source = new class('ordinary text', $extension) extends \Plank\Mediable\SourceAdapters\RawContentAdapter {
+                private string $suffix;
+                public function __construct(string $source, string $suffix) { parent::__construct($source); $this->suffix = $suffix; }
+                public function extension(): ?string { return $this->suffix; }
+            };
+            try {
+                app(MediaUploader::class)->fromSource($source)->toDestination('local', 'files')->useFilename('blocked')->upload();
+                self::fail('Executable source extension must be rejected');
+            } catch (\Plank\Mediable\Exceptions\MediaUpload\FileNotSupportedException $e) {
+                self::assertStringContainsString($extension, $e->getMessage());
+            }
+        }
+        self::assertSame(0, Media::count());
+        $media = app(MediaUploader::class)->fromString('safe-text')->toDestination('local', 'files')->useFilename('image.PhP')->upload();
+        self::assertSame('image-PhP.txt', basename($media->fresh()->getDiskPath()));
+        self::assertSame('safe-text', $media->contents());
+        $media->move('files', 'renamed.pht');
+        self::assertSame('renamed-pht.txt', basename($media->fresh()->getDiskPath()));
+        self::assertSame('safe-text', $media->contents());
+    }
+    public function testDotfilesAreNeutralizedAndEmptyInferredFilenameRejected(): void {
+        $this->migrate();
+        self::assertSame('env', File::sanitizeFilename('.env'));
+        self::assertSame('cafe-resume', File::sanitizeFilename('café résumé'));
+        self::assertSame('script-PHT.txt', File::sanitizeFilename('script.PHT.txt'));
+        self::assertSame('settings-ini', File::sanitizeFilename('settings.ini'));
+        $media = app(MediaUploader::class)->fromString('ordinary')->toDestination('local', 'files')->useFilename('.env')->upload();
+        self::assertSame('env.txt', basename($media->getDiskPath()));
+        $source = new class('ordinary') extends \Plank\Mediable\SourceAdapters\RawContentAdapter {
+            public function filename(): ?string { return '...'; }
+        };
+        $this->expectException(\Plank\Mediable\Exceptions\MediaUpload\ConfigurationException::class);
+        app(MediaUploader::class)->fromSource($source)->toDestination('local', 'files')->upload();
+    }
+
+    public function testMalformedSvgReplacementPreservesOriginalBytesAndRow(): void {
+        $this->migrate();
+        $media = app(MediaUploader::class)->fromString('<svg xmlns="http://www.w3.org/2000/svg"><rect width="2" height="2"/></svg>')->toDestination('local', 'vectors')->useFilename('original')->upload();
+        $originalBytes = $media->contents();
+        $originalRow = $media->fresh()->getAttributes();
+        $source = new class('<svg><unclosed>') extends \Plank\Mediable\SourceAdapters\RawContentAdapter {
+            public function mimeType(): string { return 'image/svg+xml'; }
+            public function extension(): ?string { return 'svg'; }
+        };
+        try {
+            app(MediaUploader::class)->fromSource($source)->replace($media);
+            self::fail('Malformed SVG replacement must fail');
+        } catch (\Plank\Mediable\Exceptions\MediaUploadException $e) {
+            self::assertStringContainsString('sanitize', $e->getMessage());
+        }
+        self::assertSame($originalRow, $media->fresh()->getAttributes());
+        self::assertSame($originalBytes, $media->fresh()->contents());
+        self::assertSame(1, Media::count());
+    }
+
+    private function assertSafeSvg(Media $media): void {
+        $bytes = $media->contents();
+        self::assertStringNotContainsString('<script', $bytes);
+        self::assertStringNotContainsString('onload=', $bytes);
+        self::assertStringContainsString('<rect', $bytes);
+        self::assertSame(strlen($bytes), $media->fresh()->size);
+    }
+
     private function migrate(): void { $this->migrator->run($this->migrator->paths()); }
 }

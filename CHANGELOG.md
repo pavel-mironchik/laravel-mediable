@@ -10,15 +10,33 @@ Illuminate ^10.48.25|^11.34.0 and Image ^2.7.1|^3.9.1 constraints.
 * Backport upstream CVE-2026-49970 fix `6d1e7fb39922fdfb3b2d120e13f4eb2e653ae082`
   verbatim for source and its upstream regression test. Dots are stripped from
   directory segments, backslashes become separators, traversal segments vanish.
-  Exact upstream behavior also drops the literal `0` segment via `array_filter`.
+  A bounded compatibility adaptation preserves literal `0` segments in both
+  sanitizer filtering and path assembly; upstream falsey checks lost those paths.
 * Backport upstream non-console migration registration fix
   `d8ace8d844f0e821707d0dddeeeff4fb35586349` verbatim.
 * Own identity replaces only its matching version of `plank/laravel-mediable`.
   Namespace, MIT license and original authorship remain intact.
 * Add bounded real-component regression matrix; retain upstream full test gate.
 
+* Backport SVG upload/replacement sanitization (CVE-2026-49971), including
+  extension-or-MIME applicability, using `enshrined/svg-sanitize ^1.0`.
+  That separately installed dependency is GPL-2.0-or-later; this fork's original
+  source license remains MIT. Versions <=0.22 are deliberately not permitted.
+* Backport executable-extension denial and double-extension sanitization
+  (CVE-2026-49972), `.pht`/`.ini`/`.cer`/`.asa` defaults, corrected config naming,
+  dotfile stripping and empty inferred filename rejection. Preserve v6 array
+  configuration API instead of adopting upstream v7 configuration objects.
+
+Security validation intentionally changes acceptance: active SVG content is
+removed; malformed/custom-DTD SVG is rejected; executable suffixes are rejected
+or neutralized; leading/trailing dots are stripped. Benign text, Unicode names,
+Image 2 variants and existing zero directories have regression proof.
+
 This is not upstream 7 and does not claim all 7.x security fixes. In particular,
-remote-source SSRF restrictions from 7.x are NOT backported. Consumers must
+remote-source SSRF restrictions from 7.x are NOT backported. Consumers MUST
+disable remote sources in source-adapter mappings and enforce that policy at
+uploader entry points; direct RemoteUrlAdapter construction is NOT safe. The
+upstream SSRF/redirect commits are recorded as references, not adopted fixes. Consumers must
 assess upstream advisories independently of the renamed Composer package;
 a clean audit of the fork's name alone is not proof that upstream advisories
 are addressed. Review `backport-provenance.json` and consumer security policy.
