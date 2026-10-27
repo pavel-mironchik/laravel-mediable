@@ -1,3 +1,30 @@
+# FlashAsia fork release notes
+
+## 6.2.2 (candidate, not yet published)
+
+Own `flashasia/laravel-mediable` release, based on official Plank 6.2.1.
+Patch scope: fix existing directory sanitization and migration registration;
+no new capability or major-version compatibility promise. Retains PHP >=8.1,
+Illuminate ^10.48.25|^11.34.0 and Image ^2.7.1|^3.9.1 constraints.
+
+* Backport upstream CVE-2026-49970 fix `6d1e7fb39922fdfb3b2d120e13f4eb2e653ae082`
+  verbatim for source and its upstream regression test. Dots are stripped from
+  directory segments, backslashes become separators, traversal segments vanish.
+  Exact upstream behavior also drops the literal `0` segment via `array_filter`.
+* Backport upstream non-console migration registration fix
+  `d8ace8d844f0e821707d0dddeeeff4fb35586349` verbatim.
+* Own identity replaces only its matching version of `plank/laravel-mediable`.
+  Namespace, MIT license and original authorship remain intact.
+* Add bounded real-component regression matrix; retain upstream full test gate.
+
+This is not upstream 7 and does not claim all 7.x security fixes. In particular,
+remote-source SSRF restrictions from 7.x are NOT backported. Consumers must
+assess upstream advisories independently of the renamed Composer package;
+a clean audit of the fork's name alone is not proof that upstream advisories
+are addressed. Review `backport-provenance.json` and consumer security policy.
+
+---
+
 # Changelog
 
 ## 6.1.0

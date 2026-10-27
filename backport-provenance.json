@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "package": "flashasia/laravel-mediable",
+  "candidate_release": "6.2.2",
+  "release_status": "unpublished-candidate",
+  "upstream": {
+    "repository": "https://github.com/plank/laravel-mediable",
+    "version": "6.2.1",
+    "commit": "a1c76003a14323f1031e77019acb15d95adedc38",
+    "license": "MIT"
+  },
+  "backports": [
+    {
+      "commit": "6d1e7fb39922fdfb3b2d120e13f4eb2e653ae082",
+      "files": [
+        "src/Helpers/File.php",
+        "tests/Integration/Helpers/FileTest.php"
+      ],
+      "application": "Exact source and regression-test diff; unrelated upstream 7.x changelog context omitted.",
+      "advisory": "CVE-2026-49970",
+      "url": "https://github.com/plank/laravel-mediable/commit/6d1e7fb39922fdfb3b2d120e13f4eb2e653ae082"
+    },
+    {
+      "commit": "d8ace8d844f0e821707d0dddeeeff4fb35586349",
+      "files": [
+        "src/MediableServiceProvider.php"
+      ],
+      "application": "Exact upstream diff.",
+      "url": "https://github.com/plank/laravel-mediable/commit/d8ace8d844f0e821707d0dddeeeff4fb35586349"
+    }
+  ],
+  "security_scope": {
+    "all_upstream_7_fixes": false,
+    "remote_ssrf_fix_backported": false,
+    "consumer_requirement": "Independently map upstream advisory set to reviewed backports or enforced application restrictions. Rename and clean fork-name audit are not security proof."
+  },
+  "regressions": [
+    "upstream sanitizer vectors and Unicode",
+    "real uploader/copy/move traversal containment and outside sentinel",
+    "non-console real provider migration path registration and SQLite Migrator",
+    "pre-alt schema row preservation and repeated migrator run",
+    "real Image 2.7.2 GD variant without optimizer",
+    "removing either source backport fails targeted tests"
+  ],
+  "component_matrix": {
+    "illuminate": [
+      "10.49.0",
+      "11.51.0"
+    ],
+    "php": [
+      "8.3.28",
+      "8.4.17"
+    ],
+    "image": "2.7.2",
+    "tests_per_cell": 5,
+    "assertions_per_cell": 52,
+    "php84_deprecations_per_cell": 8,
+    "deprecation_origin": "Intervention Image 2.7.2 implicit nullable parameters",
+    "limitations": [
+      "No published Illuminate 10.50.3 component tags; full framework consumer proof is separate",
+      "Not full framework/HTTP/Orchestra/S3/optimizer proof",
+      "PHP 8.1/8.2 and Image 3 declared upstream constraints retained but not tested in bounded matrix"
+    ]
+  },
+  "release_commit_policy": "No self-referential commit SHA embedded. Consumer pins actual release tag and immutable SHA in lock and review policy.",
+  "file_sha256": {
+    "LICENSE.md": "e135a634f6d6d00b81d39f3c9957aa2f332772cd6f5e5f2542cfc500cae37ab7",
+    "composer.json": "27a0841d6b93a4bbf69ee5a30ea52e29e231381ef18f8bfb453dc662b421883e",
+    "src/Helpers/File.php": "0596c8d4a8b51827e107a48e64f7a6e5c3755484187ecee9ea08800dad766355",
+    "src/MediableServiceProvider.php": "6eeb06d67f882e0ab6ffaf68e7d410ede5fc7e8b5ad2f981da2e27259ec1bded",
+    "tests/Integration/Helpers/FileTest.php": "999a7e961c09b090ecd1127336de4d3ec98eac0750d3ae2d282c66dafb40b81e",
+    "tests/Component/BackportTest.php": "52b532e2b1de275b4786e4bf2511923449f242dee238239394c9aa5c8c376706",
+    "tests/Component/bootstrap.php": "c2b182a3f41e3fa6b28fac0b23deda5c54766228eebcc762a0be700385589876",
+    "tests/Component/prepare.php": "925a7e9c3f211349f9cf62d23ead7d0ee7207f91fc1cbbc8324b038cd7175795",
+    "migrations/2020_10_12_000000_add_variants_to_media.php": "57bcad8fee2f2e2bd524dc131700ef44e7c9bbe9df5bbd08f917afc3b938909e",
+    "migrations/2024_03_30_000000_add_alt_to_media.php": "28b3a44d08977cea2ff356de8a040d6c883394c9347bf2010fbfe477bed89e9b",
+    "migrations/2016_06_27_000000_create_mediable_tables.php": "395b12016e3c001011efcf6ab22b7d5e99b1f3a6adb0974d586050e60c5fec79"
+  }
+}
