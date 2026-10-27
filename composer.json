@@ -1,6 +1,6 @@
 {
-    "name": "plank/laravel-mediable",
-    "description": "A package for easily uploading and attaching media files to models with Laravel",
+    "name": "flashasia/laravel-mediable",
+    "description": "FlashAsia maintained Laravel Mediable 6 compatibility fork with reviewed upstream backports",
     "keywords": [
         "media",
         "image",
@@ -70,5 +70,8 @@
                 "ImageManipulator": "Plank\\Mediable\\Facades\\ImageManipulator"
             }
         }
+    },
+    "replace": {
+        "plank/laravel-mediable": "self.version"
     }
 }
