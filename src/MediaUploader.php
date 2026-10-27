@@ -1172,7 +1172,10 @@ class MediaUploader
                 $model->extension,
                 $model->aggregate_type
             )) {
-                $result = $sanitizer->sanitize($this->source->getStream());
+                $stream = $this->source->getStream();
+                // A previous sanitizer may consume the stream and return null.
+                $stream->rewind();
+                $result = $sanitizer->sanitize($stream);
                 if ($result !== null) {
                     $this->source = new StreamAdapter($result);
                 }

@@ -21,6 +21,8 @@ Illuminate ^10.48.25|^11.34.0 and Image ^2.7.1|^3.9.1 constraints.
   Namespace, MIT license and original authorship remain intact.
 * Add bounded real-component regression matrix; retain upstream full test gate.
 
+* Ensure each applicable sanitizer receives the complete current stream, including
+  after an inspect-only sanitizer consumes it and returns null.
 * Backport SVG upload/replacement sanitization (CVE-2026-49971), including
   extension-or-MIME applicability, using `enshrined/svg-sanitize ^1.0`.
   That separately installed dependency is GPL-2.0-or-later; this fork's original

@@ -124,7 +124,9 @@
     "zero and nested zero sanitizer segments, real upload/copy/move bytes and existing zero rename with root-neighbor false collision",
     "SVG upload/replacement active content removal with row size synchronized",
     "SVG extension despite text MIME, custom DTD denial, malformed replacement preserves original bytes and row",
-    "forbidden php/pht/ini/cer/asa, mixed-case double extension, leading dot, benign Unicode and empty inferred filename"
+    "forbidden php/pht/ini/cer/asa, mixed-case double extension, leading dot, benign Unicode and empty inferred filename",
+    "ARB01: FileAdapter and StreamAdapter upload and replace through inspect-only-null then SVG chain preserve safe rect and remove script/onload; removing rewind fails",
+    "ARB02: separate extension and MIME allow/deny overlap reject before rows/files; each array_diff-to-allowed mutation fails"
   ],
   "component_matrix": {
     "illuminate": [
@@ -136,8 +138,8 @@
       "8.4.17"
     ],
     "image": "2.7.2",
-    "tests_per_cell": 13,
-    "assertions_per_cell": 102,
+    "tests_per_cell": 16,
+    "assertions_per_cell": 126,
     "php84_deprecations_per_cell": 8,
     "deprecation_origin": "Intervention Image 2.7.2 implicit nullable parameters",
     "limitations": [
@@ -181,7 +183,7 @@
     "src/Jobs/CreateImageVariants.php": "17ce1b610f64880d686f0d59fba754e8c9c23633b53e0a7af926054042ba987d",
     "src/Media.php": "beb48500a9f56764b9c8ea123a6ea4e51c2710d6a6de5380d9e4d1abf7de7882",
     "src/MediaMover.php": "feeafbe8feb8e242a79c2431e662e1cc8f62740deea1eace1cd7ad608b36332b",
-    "src/MediaUploader.php": "1cc4d58abf41431707b5049c40aebadb57bb7e650dc828f2c5aeaa3b48183977",
+    "src/MediaUploader.php": "2b8dc511428ac796b657052a41357ddd1460832d6abbd04cb96e25c15332c193",
     "src/Mediable.php": "fc998420341985f5efc29df98324abfbcd49b5004717f4adea3c7d79795ae9fe",
     "src/MediableCollection.php": "428c4fa355a0b8db594f4f27d9c41da69e490c97ad606822bbbb76d851d35cb0",
     "src/MediableInterface.php": "595433d135d2a446f16d5a0e3b42021dc80e7f0728f713e9a95d8c34d67c266a",
@@ -202,7 +204,7 @@
     "src/UrlGenerators/TemporaryUrlGeneratorInterface.php": "de8d55790e8491b51c599be48b5e6f179a45319a471a78aaebd3212d06bacddc",
     "src/UrlGenerators/UrlGeneratorFactory.php": "effc1405ca60b9dd69d017fd07781369a556cc46ec4f70d9476ffc5ea50c4d0b",
     "src/UrlGenerators/UrlGeneratorInterface.php": "f2a0d807ad99fd7dc955456975fe8c899f8e1e40bdf8552564c7595dae534fbe",
-    "tests/Component/BackportTest.php": "10286d9f504cc8381b047f3a0a7e7e6a071e9d95772e63433b39068f6cbb3d65",
+    "tests/Component/BackportTest.php": "f28fd83c45607d867e36861d6349f1525338c2dd8985415d9a27eb0226d5bf21",
     "tests/Component/README.md": "4ff6dd856240ac0c1a767d6303964c390966e01a844228db4a4c081343891e03",
     "tests/Component/bootstrap.php": "c2b182a3f41e3fa6b28fac0b23deda5c54766228eebcc762a0be700385589876",
     "tests/Component/prepare.php": "925a7e9c3f211349f9cf62d23ead7d0ee7207f91fc1cbbc8324b038cd7175795",
@@ -210,5 +212,11 @@
   },
   "dependency_license": {
     "enshrined/svg-sanitize": "GPL-2.0-or-later (separate Composer dependency; not copied into fork)"
-  }
+  },
+  "compatibility_adaptations": [
+    {
+      "file": "src/MediaUploader.php",
+      "reason": "ARB01: rewind current stream before every applicable sanitizer; inspect-only sanitizer may consume bytes and return null, which otherwise bypasses subsequent SVG sanitization."
+    }
+  ]
 }

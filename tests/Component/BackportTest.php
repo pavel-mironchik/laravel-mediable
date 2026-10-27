@@ -15,6 +15,14 @@ use Plank\Mediable\Media;
 use Plank\Mediable\MediableServiceProvider;
 use Plank\Mediable\MediaUploader;
 
+final class InspectOnlySanitizer implements \Plank\Mediable\FileSanitizers\SanitizerInterface {
+    public function isApplicable(string $mimeType, string $extension, string $aggregateType): bool { return true; }
+    public function sanitize(\Psr\Http\Message\StreamInterface $source): ?\Psr\Http\Message\StreamInterface {
+        $source->getContents();
+        return null;
+    }
+}
+
 final class BackportTest extends TestCase {
     private ComponentApplication $app;
     private string $root;
@@ -232,6 +240,54 @@ final class BackportTest extends TestCase {
         self::assertSame($originalRow, $media->fresh()->getAttributes());
         self::assertSame($originalBytes, $media->fresh()->contents());
         self::assertSame(1, Media::count());
+    }
+
+
+    public function testReadingNullSanitizerCannotBypassSvgForFileAndStreamUploadAndReplace(): void {
+        $this->migrate();
+        app('config')->set('mediable.file_sanitizers', [InspectOnlySanitizer::class, \Plank\Mediable\FileSanitizers\SvgSanitizer::class]);
+        $path = dirname(__DIR__) . '/_data/insecure.svg';
+        foreach (['file', 'stream'] as $kind) {
+            $makeSource = fn() => $kind === 'file'
+                ? new \Plank\Mediable\SourceAdapters\FileAdapter(new \Symfony\Component\HttpFoundation\File\File($path))
+                : new \Plank\Mediable\SourceAdapters\StreamAdapter(\GuzzleHttp\Psr7\Utils::streamFor(file_get_contents($path)));
+            $media = app(MediaUploader::class)->fromSource($makeSource())->toDestination('local', 'chain')->useFilename($kind)->upload();
+            $this->assertSafeSvg($media);
+            $replaced = app(MediaUploader::class)->fromSource($makeSource())->replace($media);
+            self::assertSame($media->id, $replaced->id);
+            $this->assertSafeSvg($replaced);
+        }
+    }
+    public function testForbiddenExtensionOverridesAllowedExtension(): void {
+        $this->migrate();
+        $source = new class('ordinary text') extends \Plank\Mediable\SourceAdapters\RawContentAdapter {
+            public function extension(): ?string { return 'php'; }
+        };
+        try {
+            app(MediaUploader::class)->fromSource($source)->setAllowUnrecognizedTypes(true)
+                ->setAllowedExtensions(['php'])->setForbiddenExtensions(['php'])
+                ->setAllowedMimeTypes(['text/plain'])->setForbiddenMimeTypes([])
+                ->toDestination('local', 'files')->useFilename('blocked')->upload();
+            self::fail('Forbidden extension must override the allowlist');
+        } catch (\Plank\Mediable\Exceptions\MediaUpload\FileNotSupportedException $e) {
+            self::assertStringContainsString('php', $e->getMessage());
+        }
+        self::assertSame(0, Media::count());
+        self::assertSame([], app('filesystem')->disk('local')->allFiles());
+    }
+    public function testForbiddenMimeOverridesAllowedMime(): void {
+        $this->migrate();
+        try {
+            app(MediaUploader::class)->fromString('ordinary text')
+                ->setAllowedExtensions(['txt'])->setForbiddenExtensions([])
+                ->setAllowedMimeTypes(['text/plain'])->setForbiddenMimeTypes(['text/plain'])
+                ->toDestination('local', 'files')->useFilename('blocked')->upload();
+            self::fail('Forbidden MIME must override the allowlist');
+        } catch (\Plank\Mediable\Exceptions\MediaUpload\FileNotSupportedException $e) {
+            self::assertStringContainsString('text/plain', $e->getMessage());
+        }
+        self::assertSame(0, Media::count());
+        self::assertSame([], app('filesystem')->disk('local')->allFiles());
     }
 
     private function assertSafeSvg(Media $media): void {
