@@ -1,6 +1,9 @@
 # FlashAsia fork release notes
 
-## 6.2.2 (candidate, not yet published)
+## 6.2.2 release scope
+
+Actual release publication is established by the VCS tag and consumer immutable
+lock; these source notes do not assert publication status.
 
 Own `flashasia/laravel-mediable` release, based on official Plank 6.2.1.
 Patch scope: fix existing directory sanitization and migration registration;

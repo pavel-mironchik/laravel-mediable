@@ -1,5 +1,6 @@
-> **FlashAsia compatibility fork (6.2.2 candidate).** Based on Plank 6.2.1,
+> **FlashAsia compatibility fork (6.2.2 release line).** Based on Plank 6.2.1,
 > with reviewed upstream security backports and zero-path compatibility fixes. This is not upstream 7.x.
+> Actual releases are established by VCS tags and consumer immutable locks.
 > See [fork release scope](CHANGELOG.md), [provenance](backport-provenance.json)
 > and [bounded component tests](tests/Component/README.md). Upstream instructions
 > below are retained for attribution and reference; package identity is

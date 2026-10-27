@@ -2,7 +2,7 @@
   "schema_version": 1,
   "package": "flashasia/laravel-mediable",
   "candidate_release": "6.2.2",
-  "release_status": "unpublished-candidate",
+  "release_status": "source candidate; actual release publication established externally by VCS tags and consumer immutable locks",
   "upstream": {
     "repository": "https://github.com/plank/laravel-mediable",
     "version": "6.2.1",
